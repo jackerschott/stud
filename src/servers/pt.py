@@ -25,16 +25,16 @@ lecNumberFormats = {
   'gr' : '{:n}'
 }
 
-def checkForSavedSession():
-  return path.exists('pt_cjar')
+def checkForSavedSession(cjarPath):
+  return path.exists(cjarPath)
 
-def loadSession(session):
-  if checkForSavedSession():
-    with open('pt_cjar', 'rb') as f:
+def loadSession(session, cjarPath):
+  if checkForSavedSession(cjarPath):
+    with open(cjarPath, 'rb') as f:
       session.cookies.update(load(f))
 
-def saveSession(session):
-  with open('pt_cjar', 'wb') as f:
+def saveSession(session, cjarPath):
+  with open(cjarPath, 'wb') as f:
     dump(session.cookies, f)
 
 def checkLoginStatusPT(session):

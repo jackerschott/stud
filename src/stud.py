@@ -1,21 +1,67 @@
 #!/usr/bin/python3
-import htheo4
-import pt
+import os
 import requests
+import servers.theo4 as theo4
+import servers.pap as pap
+import servers.pt as pt
+import signal
 import sys
 from getpass import getpass
 from studModule import StudModule, Lecture, PracticalCourse
 from os import path
 
-lecPath = '/home/jona/Documents/Studies/Lectures'
-papPath = '/home/jona/Documents/Studies/PAP2'
+signal.signal(signal.SIGINT, lambda x,y: { print(), sys.exit(0) })
 
-papHomeUrl = 'https://www.physi.uni-heidelberg.de/cgi-bin/ap-status.pl'
+homePath = path.expanduser('~')
+
+def loadConfigs(path):
+  configs = {}
+  with open(path) as configFile:
+    for line in configFile:
+      line = line.strip()
+      if line == '':
+        continue
+      key, config = line.split(' : ')
+      config = config.split(', ')
+      if len(config) == 1:
+        config = config[0]
+      configs[key] = config
+  return configs
+
+# Load configurations
+# configPath = path.join(homePath, '.config', 'stud')
+configPath = path.join(homePath, '.config', 'stud')
+configFile = path.join(configPath, 'studrc')
+ptCookiePath = path.join(configPath, 'pt_cjar')
+configs = loadConfigs(configFile)
+lecPath = configs['lecPath']
+pcPath = configs['pcPath']
+
+lecUrls = {
+  'ex4' : {
+    'lsf' : 'https://lsf.uni-heidelberg.de/qisserver/rds?state=verpublish&status=init&vmfile=no&publishid=295596&moduleCall=webInfo&publishConfFile=webInfo&publishSubDir=veranstaltung',
+    'psets' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=999',
+    'pgroups' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=999',
+    'home' : 'https://uebungen.physik.uni-heidelberg.de/vorlesung/20191/pep4'
+  },
+  'theo4' : {
+    'lsf' : 'https://lsf.uni-heidelberg.de/qisserver/rds?state=verpublish&status=init&vmfile=no&publishid=295616&moduleCall=webInfo&publishConfFile=webInfo&publishSubDir=veranstaltung',
+    'psets' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=991',
+    'pgroups' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=991',
+    'home' : 'https://www.thphys.uni-heidelberg.de/~hebecker/QM/qm.html'
+  },
+  'gr' : {
+    'lsf' : 'https://lsf.uni-heidelberg.de/qisserver/rds?state=verpublish&status=init&vmfile=no&publishid=295624&moduleCall=webInfo&publishConfFile=webInfo&publishSubDir=veranstaltung',
+    'psets' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=992',
+    'pgroups' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=992',
+    'home' : 'https://uebungen.physik.uni-heidelberg.de/vorlesung/20191/992'
+  }
+}
 
 def ptCreateSession(session):
   # Login or use old session
-  pt.loadSession(session)
-  if not pt.checkForSavedSession() or not pt.checkLoginStatusPT(session):
+  pt.loadSession(session, ptCookiePath)
+  if not pt.checkForSavedSession(ptCookiePath) or not pt.checkLoginStatusPT(session):
     # Get username and password
     id = input("username for '" + pt.serverUrl + "': ")
     passw = getpass("password for '" + pt.serverUrl + "': ")
@@ -26,7 +72,7 @@ def ptCreateSession(session):
     if not success:
       print('Invalid username or password', file=sys.stderr)
       exit(-1)
-    pt.saveSession(session)
+    pt.saveSession(session, ptCookiePath)
 
 # Check for module
 if len(sys.argv) <= 1:
@@ -35,12 +81,26 @@ if len(sys.argv) <= 1:
 
 # Build module
 moduleName = sys.argv[1]
-if path.exists(path.join(lecPath, moduleName)):
+if moduleName in configs['lecs']:
+  
+  # Create and check for module folder
   folderPath = path.join(lecPath, moduleName)
-  urls = Lecture.urlsFromFile(path.join(lecPath, moduleName, 'urls.txt'))
-  module = Lecture(moduleName, urls, folderPath)
-elif moduleName == 'pap':
-  module = PracticalCourse('pap', papHomeUrl, papPath)
+  if not path.exists(folderPath):
+    print("The module folder '" + folderPath + "' does not exist", file=sys.stderr)
+    exit(-1)
+
+  # Build module
+  module = Lecture(moduleName, lecUrls[moduleName], folderPath, configs['scriptName'], configs['lecPsetDirName'], configs['lecPsetPrefix'])
+elif moduleName in configs['pcs']:
+
+  # Create and check for module folder
+  folderPath = path.join(pcPath, moduleName)
+  if not path.exists(folderPath):
+    print("The module folder '" + folderPath + "' does not exist", file=sys.stderr)
+    exit(-1)
+  
+  # Build module
+  module = PracticalCourse(moduleName, pap.homeUrl, folderPath, configs['scriptName'])
 else:
   print('The module ' + sys.argv[1] + ' does not exist', file=sys.stderr)
   exit(-1)
@@ -51,7 +111,7 @@ if len(sys.argv) == 2 or sys.argv[2] == 'home':
   exit(0)
 
 # Show other url
-if sys.argv[2] in module.urls:
+if type(module) is Lecture and sys.argv[2] in module.urls:
   if not type(module) is Lecture:
     print('This option is only available for lectures', file=sys.stderr)
     exit(-1)
@@ -72,6 +132,8 @@ if sys.argv[2] == 'pset':
   # Check if problem set exists locally
   n = int(sys.argv[3])
   if not module.psetCheck(n):
+    if not path.exists(module.psetPath()):
+      os.mkdir(module.psetPath())
     print('Problem set ' + str(n) + ' was not found locally')
     print('Searching for problem set ' + str(n) + " on '" + pt.serverUrl + "'...")
     print()
@@ -99,20 +161,16 @@ if sys.argv[2] == 'pset':
 # Open or download and open script
 if sys.argv[2] == 'script':
   if not module.scriptCheck():
-    if module.name == 'ex4':
-      # No Script
-      print('There exists no script for this lecture', file=sys.stderr)
-      exit(-1)
-    elif module.name == 'theo4':
+    if module.name == 'theo4':
       print('Script was not found locally')
-      print("Searching for script on '" + htheo4.serverUrl + "'...")
+      print("Searching for script on '" + theo4.serverUrl + "'...")
       print()
 
       # Create session
       session = requests.Session()
 
       # Download script from homepage
-      content = htheo4.getScript(session)
+      content = theo4.getScript(session)
       with open(module.scriptPath(), 'wb') as scriptFile:
         scriptFile.write(content)
       print("Script was saved at '" + module.scriptPath() + "'")
@@ -130,9 +188,17 @@ if sys.argv[2] == 'script':
       with open(module.scriptPath(), 'wb') as scriptFile:
         scriptFile.write(content)
       print("Script was saved at '" + module.scriptPath() + "'")
-
+    else:
+      # No Script
+      print('There exists no script for this module', file=sys.stderr)
+      exit(-1)
+    
     # Show script
     module.scriptShow()
   else:
     # Show script
     module.scriptShow()
+  exit(0)
+
+print("'" + sys.argv[2] + "' is not a valid option for a lecture", file=sys.stderr)
+exit(-1)
