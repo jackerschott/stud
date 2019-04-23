@@ -7,8 +7,8 @@ import servers.pt as pt
 import signal
 import sys
 from getpass import getpass
-from studModule import StudModule, Lecture, PracticalCourse
 from os import path
+from studModule import StudModule, Lecture, PracticalCourse
 
 signal.signal(signal.SIGINT, lambda x,y: { print(), sys.exit(0) })
 
@@ -29,7 +29,6 @@ def loadConfigs(path):
   return configs
 
 # Load configurations
-# configPath = path.join(homePath, '.config', 'stud')
 configPath = path.join(homePath, '.config', 'stud')
 configFile = path.join(configPath, 'studrc')
 ptCookiePath = path.join(configPath, 'pt_cjar')
@@ -134,11 +133,13 @@ if sys.argv[2] == 'pset':
   
   # Check if problem set exists locally
   n = int(sys.argv[3])
-  if not module.psetCheck(n):
+  psetExists = module.psetCheck(n)
+  if not psetExists or '-u' in sys.argv[4:]:
     if not path.exists(module.psetPath()):
       os.mkdir(module.psetPath())
-    print('Problem set ' + str(n) + ' was not found locally')
-    print('Searching for problem set ' + str(n) + " on '" + pt.serverUrl + "'...")
+    if not psetExists:
+      print('Problem set ' + str(n) + ' was not found locally')
+    print('Downloading problem set ' + str(n) + " from '" + pt.serverUrl + "'...")
     print()
 
     # Create session on the physics tutorial website
@@ -148,7 +149,7 @@ if sys.argv[2] == 'pset':
     # Get problem set n by lecture name
     content, success = pt.tryGetPsetByLec(session, module.name, n)
     if not success:
-      print('Problem set ' + str(n) + ' seems to be unavailable yet', file=sys.stderr)
+      print('Problem set ' + str(n) + ' seems to be unavailable (yet)', file=sys.stderr)
       exit(-1)
     with open(module.psetPath(n), 'wb') as psetFile:
       psetFile.write(content)
@@ -163,10 +164,12 @@ if sys.argv[2] == 'pset':
 
 # Open or download and open script
 if sys.argv[2] == 'script':
-  if not module.scriptCheck():
+  scriptExists = module.scriptCheck()
+  if not scriptExists or '-u' in sys.argv[3:]:
     if module.name == 'theo4':
-      print('Script was not found locally')
-      print("Searching for script on '" + theo4.serverUrl + "'...")
+      if not scriptExists:
+        print('Script was not found locally')
+      print("Downloading script from '" + theo4.serverUrl + "'...")
       print()
 
       # Create session
@@ -178,8 +181,9 @@ if sys.argv[2] == 'script':
         scriptFile.write(content)
       print("Script was saved at '" + module.scriptPath() + "'")
     elif module.name == 'gr':
-      print('Script was not found locally')
-      print("Searching for script on '" + pt.serverUrl + "'...")
+      if not scriptExists:
+        print('Script was not found locally')
+      print("Downloading script from '" + pt.serverUrl + "'...")
       print()
 
       # Create session on the physics tutorial website
@@ -191,6 +195,34 @@ if sys.argv[2] == 'script':
       with open(module.scriptPath(), 'wb') as scriptFile:
         scriptFile.write(content)
       print("Script was saved at '" + module.scriptPath() + "'")
+    elif module.name == 'pap21':
+      if not scriptExists:
+        print('Script was not found locally')
+      print("Downloading script from '" + pap.serverUrl + "'...")
+      print()
+
+      # Create session
+      session = requests.Session()
+
+      # Download script from homepage
+      content = pap.getPAP21Script(session)
+      with open(module.scriptPath(), 'wb') as scriptFile:
+        scriptFile.write(content)
+      print("Script was saved at '" + module.scriptPath() + "'...")
+    elif module.name == 'pap22':
+      if not scriptExists:
+        print('Script was not found locally')
+      print("Downloading script from '" + pap.serverUrl + "'...")
+      print()
+
+      # Create session
+      session = requests.Session()
+
+      # Download script from homepage
+      content = pap.getPAP22Script(session)
+      with open(module.scriptPath(), 'wb') as scriptFile:
+        scriptFile.write(content)
+      print("Script was saved at '" + module.scriptPath() + "'...")
     else:
       # No Script
       print('There exists no script for this module', file=sys.stderr)
