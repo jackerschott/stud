@@ -9,6 +9,7 @@ import sys
 from getpass import getpass
 from os import path
 from studModule import StudModule, Lecture, PracticalCourse
+from sys import exit
 
 signal.signal(signal.SIGINT, lambda x,y: { print(), sys.exit(0) })
 
