@@ -1,0 +1,10 @@
+{
+    "lecs": "ex4, theo4, gr",
+    "pcs": "pap1, pap21, pap22",
+    "studPath": "~/Documents/Studies",
+    "lecFolderName": "Lectures",
+    "pcFolderName": "PracticalCourses",
+    "psetFolderName": "ProblemSets",
+    "psetPrefix": "problem_set_",
+    "scriptName": "script"
+}
