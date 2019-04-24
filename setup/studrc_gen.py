@@ -57,6 +57,8 @@ config['lecs'] = ', '.join(lecs)
 config['pcs'] = ', '.join(pcs)
 
 # Generating configuration
-print('Generating configuration...')
+print('Generating configuration... ', end='')
 with open(outFilePath, 'w') as outFile:
   json.dump(config, outFile, indent=2)
+  outFile.write('\n')
+print('Done')
