@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import json
 import os
 import requests
 import servers.theo4 as theo4
@@ -11,55 +12,24 @@ from os import path
 from studModule import StudModule, Lecture, PracticalCourse
 from sys import exit
 
+# Allow keyboard interrupt
 signal.signal(signal.SIGINT, lambda x,y: { print(), sys.exit(0) })
 
-homePath = path.expanduser('~')
-
-def loadConfigs(path):
-  configs = {}
-  with open(path) as configFile:
-    for line in configFile:
-      line = line.strip()
-      if line == '':
-        continue
-      key, config = line.split(' : ')
-      config = config.split(', ')
-      if len(config) == 1:
-        config = config[0]
-      configs[key] = config
-  return configs
-
 # Load configurations
-configPath = path.join(homePath, '.config', 'stud')
-configFile = path.join(configPath, 'studrc')
-ptCookiePath = path.join(configPath, 'pt_cjar')
-configs = loadConfigs(configFile)
-lecPath = configs['lecPath']
-pcPath = configs['pcPath']
+homePath = path.expanduser('~')
+configDirPath = '../'
+# configDirPath = path.join(homePath, '.config', 'stud')
+configFilePath = path.join(configDirPath, 'studrc')
+moduleUrlsPath = path.join(configDirPath, 'moduleUrls.json')
+ptCookiePath = path.join(configDirPath, 'pt_cjar')
 
-lecUrls = {
-  'ex4' : {
-    'lsf' : 'https://lsf.uni-heidelberg.de/qisserver/rds?state=verpublish&status=init&vmfile=no&publishid=295596&moduleCall=webInfo&publishConfFile=webInfo&publishSubDir=veranstaltung',
-    'home' : 'https://uebungen.physik.uni-heidelberg.de/vorlesung/20191/pep4',
-    'psets' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=999',
-    'pgroups' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=999',
-    'results' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/ergebnisse.php'
-  },
-  'theo4' : {
-    'lsf' : 'https://lsf.uni-heidelberg.de/qisserver/rds?state=verpublish&status=init&vmfile=no&publishid=295616&moduleCall=webInfo&publishConfFile=webInfo&publishSubDir=veranstaltung',
-    'home' : 'https://www.thphys.uni-heidelberg.de/~hebecker/QM/qm.html',
-    'psets' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=991',
-    'pgroups' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=991',
-    'results' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/ergebnisse.php'
-  },
-  'gr' : {
-    'lsf' : 'https://lsf.uni-heidelberg.de/qisserver/rds?state=verpublish&status=init&vmfile=no&publishid=295624&moduleCall=webInfo&publishConfFile=webInfo&publishSubDir=veranstaltung',
-    'home' : 'https://uebungen.physik.uni-heidelberg.de/vorlesung/20191/992',
-    'psets' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=992',
-    'pgroups' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=992',
-    'results' : 'https://uebungen.physik.uni-heidelberg.de/uebungen/ergebnisse.php'
-  }
-}
+with open(configFilePath) as configFile:
+  config = json.load(configFile)
+with open(moduleUrlsPath) as moduleUrlsFile:
+  lecUrls = json.load(moduleUrlsFile)
+
+lecPath = config['lecPath']
+pcPath = config['pcPath']
 
 def ptCreateSession(session):
   # Login or use old session
@@ -84,26 +54,26 @@ if len(sys.argv) <= 1:
 
 # Build module
 moduleName = sys.argv[1]
-if moduleName in configs['lecs']:
+if moduleName in config['lecs']:
   
   # Create and check for module folder
-  folderPath = path.join(lecPath, moduleName)
+  folderPath = path.join(lecPath, config[moduleName + "FolderPath"])
   if not path.exists(folderPath):
     print("The module folder '" + folderPath + "' does not exist", file=sys.stderr)
     exit(-1)
 
   # Build module
-  module = Lecture(moduleName, lecUrls[moduleName], folderPath, configs['scriptName'], configs['lecPsetDirName'], configs['lecPsetPrefix'])
-elif moduleName in configs['pcs']:
+  module = Lecture(moduleName, lecUrls[moduleName], folderPath, config['scriptName'], config['lecPsetDirName'], config['lecPsetPrefix'])
+elif moduleName in config['pcs']:
 
   # Create and check for module folder
-  folderPath = path.join(pcPath, moduleName)
+  folderPath = path.join(pcPath, config[moduleName + "FolderPath"])
   if not path.exists(folderPath):
     print("The module folder '" + folderPath + "' does not exist", file=sys.stderr)
     exit(-1)
   
   # Build module
-  module = PracticalCourse(moduleName, pap.homeUrl, folderPath, configs['scriptName'])
+  module = PracticalCourse(moduleName, pap.homeUrl, folderPath, config['scriptName'])
 else:
   print('The module ' + sys.argv[1] + ' does not exist', file=sys.stderr)
   exit(-1)
