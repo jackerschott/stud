@@ -17,9 +17,8 @@ signal.signal(signal.SIGINT, lambda x,y: { print(), sys.exit(0) })
 
 # Load configurations
 homePath = path.expanduser('~')
-configDirPath = '../'
-# configDirPath = path.join(homePath, '.config', 'stud')
-configFilePath = path.join(configDirPath, 'studrc')
+configDirPath = path.join(homePath, '.config', 'stud')
+configFilePath = path.join(configDirPath, 'studrc.json')
 moduleUrlsPath = path.join(configDirPath, 'moduleUrls.json')
 ptCookiePath = path.join(configDirPath, 'pt_cjar')
 
@@ -28,8 +27,9 @@ with open(configFilePath) as configFile:
 with open(moduleUrlsPath) as moduleUrlsFile:
   lecUrls = json.load(moduleUrlsFile)
 
-lecPath = config['lecPath']
-pcPath = config['pcPath']
+studPath = config['studPath']
+lecPath = path.join(studPath, config['lecFolderName'])
+pcPath = path.join(studPath, config['pcFolderName'])
 
 def ptCreateSession(session):
   # Login or use old session
@@ -57,17 +57,17 @@ moduleName = sys.argv[1]
 if moduleName in config['lecs']:
   
   # Create and check for module folder
-  folderPath = path.join(lecPath, config[moduleName + "FolderPath"])
+  folderPath = path.join(lecPath, config[moduleName + "FolderName"])
   if not path.exists(folderPath):
     print("The module folder '" + folderPath + "' does not exist", file=sys.stderr)
     exit(-1)
 
   # Build module
-  module = Lecture(moduleName, lecUrls[moduleName], folderPath, config['scriptName'], config['lecPsetDirName'], config['lecPsetPrefix'])
+  module = Lecture(moduleName, lecUrls[moduleName], folderPath, config['scriptName'], config['psetFolderName'], config['psetFolderName'])
 elif moduleName in config['pcs']:
 
   # Create and check for module folder
-  folderPath = path.join(pcPath, config[moduleName + "FolderPath"])
+  folderPath = path.join(pcPath, config[moduleName + "FolderName"])
   if not path.exists(folderPath):
     print("The module folder '" + folderPath + "' does not exist", file=sys.stderr)
     exit(-1)
@@ -179,7 +179,7 @@ if sys.argv[2] == 'script':
       content = pap.getPAP21Script(session)
       with open(module.scriptPath(), 'wb') as scriptFile:
         scriptFile.write(content)
-      print("Script was saved at '" + module.scriptPath() + "'...")
+      print("Script was saved at '" + module.scriptPath() + "'")
     elif module.name == 'pap22':
       if not scriptExists:
         print('Script was not found locally')
@@ -193,7 +193,7 @@ if sys.argv[2] == 'script':
       content = pap.getPAP22Script(session)
       with open(module.scriptPath(), 'wb') as scriptFile:
         scriptFile.write(content)
-      print("Script was saved at '" + module.scriptPath() + "'...")
+      print("Script was saved at '" + module.scriptPath() + "'")
     else:
       # No Script
       print('There exists no script for this module', file=sys.stderr)
