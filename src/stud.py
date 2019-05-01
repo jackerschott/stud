@@ -63,7 +63,7 @@ if moduleName in config['lecs']:
     exit(-1)
 
   # Build module
-  module = Lecture(moduleName, lecUrls[moduleName], folderPath, config['scriptName'], config['psetFolderName'], config['psetFolderName'])
+  module = Lecture(moduleName, lecUrls[moduleName], folderPath, config['scriptName'], config['psetFolderName'], config['psetPrefix'])
 elif moduleName in config['pcs']:
 
   # Create and check for module folder
