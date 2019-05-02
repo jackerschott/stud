@@ -19,5 +19,12 @@
     "psets": "https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=992",
     "pgroups": "https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=992",
     "results": "https://uebungen.physik.uni-heidelberg.de/uebungen/ergebnisse.php"
+  },
+  "cp": {
+    "lsf": "https://lsf.uni-heidelberg.de/qisserver/rds?state=verpublish&status=init&vmfile=no&publishid=295842&moduleCall=webInfo&publishConfFile=webInfo&publishSubDir=veranstaltung",
+    "home": "http://wwwstaff.ari.uni-heidelberg.de/mitarbeiter/spurzem/lehre/SS19/compphys/compphys.php.en",
+    "psets": "https://elearning2.uni-heidelberg.de/course/view.php?id=20724",
+    "pgroups": "https://uebungen.physik.uni-heidelberg.de/uebungen/liste.php?vorl=976",
+    "results": "https://uebungen.physik.uni-heidelberg.de/uebungen/ergebnisse.php"
   }
 }
