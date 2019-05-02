@@ -34,25 +34,25 @@ def loadSession(session, cjarPath):
       session.cookies.update(load(f))
 
 def saveSession(session, cjarPath):
-  with open(cjarPath, 'wb') as f:
-    dump(session.cookies, f)
+  with open(cjarPath, 'wb') as cjar:
+    dump(session.cookies, cjar)
 
-def checkLoginStatusPT(session):
+def checkLoginStatus(session):
   resp = session.get(ptOverviewUrl)
   ovSoup = BeautifulSoup(resp.text, 'lxml')
   loginStatusDiv = ovSoup.find('div', { 'class', 'boxRightColumn' })
   return not loginStatusDiv.contents[0].strip() == 'Sie sind nicht eingeloggt'
 
-def checkPasswordValidityPT(respText):
+def checkPasswordValidity(respText):
   respSoup = BeautifulSoup(respText, 'lxml')
   return respSoup.find('div', { 'class' : 'errormsg' }) is None
 
-def loginPT(session, id, passw):
+def login(session, id, passw):
   session.post(ptLoginUrl, data={ 'username' : id, 'submit' : 'senden' })
   resp = session.post(ptLoginUrl, data={ 'loginpass' : passw, 'submit' : 'senden' })
-  return session, checkPasswordValidityPT(resp.text)
+  return session, checkPasswordValidity(resp.text)
 
-def tryGetFromPT(session, lecid, fileName):
+def tryGetPSet(session, lecid, fileName):
   resp = session.post(ptListUrl, data={ 'vorl' : str(lecid) })
 
   lecSoup = BeautifulSoup(resp.text, 'lxml')
@@ -65,10 +65,10 @@ def tryGetFromPT(session, lecid, fileName):
   resp = session.get(serverUrl + psetLinks[0].attrs['href'])
   return resp.content, True
 
-def tryGetPsetByLec(session, lecName, n):
+def tryGetPSetByLec(session, lecName, n):
   filePrefix = lecFilePrefixes[lecName]
   fileNumber = lecNumberFormats[lecName].format(n)
-  return tryGetFromPT(session, lecids[lecName], filePrefix + fileNumber + '.pdf')
+  return tryGetPSet(session, lecids[lecName], filePrefix + fileNumber + '.pdf')
 
 def getGrScript(session):
   resp = session.get(grHomeUrl)
