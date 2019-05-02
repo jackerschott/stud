@@ -2,6 +2,7 @@
 import json
 import os
 import requests
+import servers.moodle as moodle
 import servers.theo4 as theo4
 import servers.pap as pap
 import servers.pt as pt
@@ -20,6 +21,7 @@ homePath = path.expanduser('~')
 configDirPath = path.join(homePath, '.config', 'stud')
 configFilePath = path.join(configDirPath, 'studrc.json')
 moduleUrlsPath = path.join(configDirPath, 'moduleUrls.json')
+moodleCookiePath = path.join(configDirPath, 'moodle_cjar')
 ptCookiePath = path.join(configDirPath, 'pt_cjar')
 
 with open(configFilePath) as configFile:
@@ -31,17 +33,33 @@ studPath = config['studPath']
 lecPath = path.join(studPath, config['lecFolderName'])
 pcPath = path.join(studPath, config['pcFolderName'])
 
+def moodleCreateSession(session):
+  # Login or use old session
+  moodle.loadSession(session, moodleCookiePath)
+  if not moodle.checkForSavedSession(ptCookiePath) or not moodle.checkLoginStatus(session):
+    # Get username and password
+    id = input("username for '" + moodle.serverUrl + "': ")
+    passw = getpass("password for '" + moodle.serverUrl + "': ")
+    print()
+
+    # Login
+    session, success = moodle.login(session, id, passw)
+    if not success:
+      print('Invalid username or password', file=sys.stderr)
+      exit(-1)
+    moodle.saveSession(session, ptCookiePath)
+
 def ptCreateSession(session):
   # Login or use old session
   pt.loadSession(session, ptCookiePath)
-  if not pt.checkForSavedSession(ptCookiePath) or not pt.checkLoginStatusPT(session):
+  if not pt.checkForSavedSession(ptCookiePath) or not pt.checkLoginStatus(session):
     # Get username and password
     id = input("username for '" + pt.serverUrl + "': ")
     passw = getpass("password for '" + pt.serverUrl + "': ")
     print()
 
     # Login
-    session, success = pt.loginPT(session, id, passw)
+    session, success = pt.login(session, id, passw)
     if not success:
       print('Invalid username or password', file=sys.stderr)
       exit(-1)
@@ -113,12 +131,21 @@ if sys.argv[2] == 'pset':
     print('Downloading problem set ' + str(n) + " from '" + pt.serverUrl + "'...")
     print()
 
-    # Create session on the physics tutorial website
-    session = requests.Session()
-    ptCreateSession(session)
+    if module.name == 'cp':
+      # Create session on moodle
+      session = requests.Session()
+      moodleCreateSession(session)
 
-    # Get problem set n by lecture name
-    content, success = pt.tryGetPsetByLec(session, module.name, n)
+      # Get problem set n by lecture name
+      content, success = moodle.tryGetPsetByCourse(session, module.name, n)
+    else:
+      # Create session on the physics tutorial website
+      session = requests.Session()
+      ptCreateSession(session)
+
+      # Get problem set n by lecture name
+      content, success = pt.tryGetPSetByLec(session, module.name, n)
+    
     if not success:
       print('Problem set ' + str(n) + ' seems to be unavailable (yet)', file=sys.stderr)
       exit(-1)
