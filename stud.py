@@ -64,6 +64,20 @@ def egmCreateSession(session):
       exit(-1)
     egm.saveSession(session, egmCookiePath)
 
+# Check for help argument
+if '-h' in sys.argv[1:] or '--help' in sys.argv[1:]:
+  print('Usage: stud MODULE [RESOURCE] [OPTIONS]')
+  print('  or:  stud MODULE pset [NUMBER] [OPTIONS]')
+  print('  or:  stud MODULE script [OPTIONS]')
+  print('Opens study resources for modules at the university of heidelberg.')
+  print()
+  print('  -u --update     Forces a new problem set download if used with')
+  print('                  the pset command')
+  print('  -t --tutorial   Adresses a problem set for the tutorials instead')
+  print('                  of a normal one')
+  print('  -h --help       Displays this help')
+  exit(0)
+
 # Check for module
 if len(sys.argv) <= 1:
   print('You must specify a module', file=sys.stderr)
@@ -118,9 +132,9 @@ if sys.argv[2] == 'pset':
   
   # Check if problem set exists locally
   n = int(sys.argv[3])
-  isTutorial = '-t' in sys.argv[4:]
+  isTutorial = '-t' in sys.argv[4:] or '--tutorial' in sys.argv[4:]
   psetExists = module.psetCheck(n, isTutorial)
-  if not psetExists or '-u' in sys.argv[4:]:
+  if not psetExists or '-u' in sys.argv[4:] or '--update' in sys.argv[4:]:
     if not path.exists(module.psetPath()):
       os.mkdir(module.psetPath())
     if not psetExists:
@@ -171,7 +185,7 @@ if sys.argv[2] == 'pset':
 # Open or download and open script
 if sys.argv[2] == 'script':
   scriptExists = module.scriptCheck()
-  if not scriptExists or '-u' in sys.argv[3:]:
+  if not scriptExists or '-u' in sys.argv[3:] or '--update' in sys.argv[3:]:
     if module.name == 'theo4':
       if not scriptExists:
         print('Script was not found locally')
