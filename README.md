@@ -2,16 +2,14 @@
 
 ## Description
 
-Tool for handling information and materials of some lectures at the university of heidelberg automatically
+Tool for accessing lecture resources at university of heidelberg automatically.
 
 ## Installation
 The tool can be installed using
 ````
-make
-make install
+$ ./install.py
 ````
 while it can be removed using
 ````
-make uninstall
+$ ./uninstall.py
 ````
-For the installation [pyinstaller](https://www.pyinstaller.org/) is needed.
