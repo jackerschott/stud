@@ -26,6 +26,19 @@ egmCookiePath = path.join(cacheDirPath, 'egm_cjar')
 lecPath = path.join(dataFolder, config['lecFolderName'])
 pcPath = path.join(dataFolder, config['pcFolderName'])
 
+def printHelp():
+  print('Usage: stud MODULE [RESOURCE] [OPTIONS]')
+  print('  or:  stud MODULE pset [NUMBER] [OPTIONS]')
+  print('  or:  stud MODULE script [OPTIONS]')
+  print('Opens study resources for modules at the university of heidelberg.')
+  print()
+  print('  -u --update     Forces a new problem set download if used with')
+  print('                  the pset command')
+  print('  -t --tutorial   Adresses a problem set for the tutorials instead')
+  print('                  of a normal one')
+  print('  -h --help       Displays this help')
+  print()
+
 def moodleCreateSession(session):
   # Check for cache dir
   if not path.isdir(cacheDirPath):
@@ -65,23 +78,9 @@ def egmCreateSession(session):
     egm.saveSession(session, egmCookiePath)
 
 # Check for help argument
-if '-h' in sys.argv[1:] or '--help' in sys.argv[1:]:
-  print('Usage: stud MODULE [RESOURCE] [OPTIONS]')
-  print('  or:  stud MODULE pset [NUMBER] [OPTIONS]')
-  print('  or:  stud MODULE script [OPTIONS]')
-  print('Opens study resources for modules at the university of heidelberg.')
-  print()
-  print('  -u --update     Forces a new problem set download if used with')
-  print('                  the pset command')
-  print('  -t --tutorial   Adresses a problem set for the tutorials instead')
-  print('                  of a normal one')
-  print('  -h --help       Displays this help')
+if len(sys.argv) <= 1 or '-h' in sys.argv[1:] or '--help' in sys.argv[1:]:
+  printHelp()
   exit(0)
-
-# Check for module
-if len(sys.argv) <= 1:
-  print('You must specify a module', file=sys.stderr)
-  exit(-1)
 
 # Build module
 moduleName = sys.argv[1]
