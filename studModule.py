@@ -32,9 +32,9 @@ class Lecture(StudModule):
     return path.join(self.folderPath, self.scriptName + '.pdf')
 
   def psetCheck(self, n, isTutorial=False):
-    return path.exists(self.psetPath(n, isTutorial=False))
+    return path.exists(self.psetPath(n, isTutorial))
 
-  def psetShow(self, n, isTutorial):
+  def psetShow(self, n, isTutorial=False):
     openUrl(self.psetPath(n, isTutorial))
   
   def scriptCheck(self):
