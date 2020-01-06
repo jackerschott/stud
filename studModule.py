@@ -2,7 +2,7 @@ import os
 from os import path
 
 def openUrl(url):
-  os.system(f'nohup xdg-open {url} &> /dev/null')
+  os.system(f'xdg-open {url}')
 
 class StudModule:
   def __init__(self, name, urls, folderPath):
